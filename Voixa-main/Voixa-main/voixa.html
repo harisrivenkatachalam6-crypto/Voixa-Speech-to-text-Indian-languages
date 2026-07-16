@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voixa — Indian Language Speech to Text</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#8b5cf6;--primary-hover:#7c3aed;--secondary:#ec4899;
+  --accent:#06b6d4;--success:#10b981;--error:#ef4444;--warning:#f59e0b;
+  --bg:#0a0f1e;--surface:rgba(20,30,55,0.65);--surface2:rgba(20,30,55,0.85);
+  --border:rgba(255,255,255,0.09);--r-lg:24px;--r-md:16px;--r-sm:10px;
+  --t:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  --txt:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;
+}
+body{
+  font-family:'Outfit',sans-serif;background-color:var(--bg);
+  background-image:
+    radial-gradient(ellipse at 10% 20%,rgba(139,92,246,.22) 0%,transparent 40%),
+    radial-gradient(ellipse at 90% 10%,rgba(236,72,153,.18) 0%,transparent 35%),
+    radial-gradient(ellipse at 50% 80%,rgba(6,182,212,.14) 0%,transparent 40%),
+    radial-gradient(ellipse at 80% 60%,rgba(16,185,129,.10) 0%,transparent 30%),
+    linear-gradient(160deg,#0a0f1e 0%,#0d1530 50%,#0a0f1e 100%);
+  background-attachment:fixed;color:var(--txt);min-height:100vh;line-height:1.6;overflow-x:hidden;
+}
+
+/* ── PAGE SYSTEM ── */
+.page{display:none;min-height:100vh}
+.page.active{display:flex}
+
+/* ══════════════════════════════════════════
+   PAGE 0 — OTP LOGIN
+══════════════════════════════════════════ */
+#page-otp{align-items:center;justify-content:center;position:relative;overflow:hidden}
+.otp-card{background:var(--surface);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:0 8px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);
+  padding:2.5rem 2rem;max-width:440px;width:100%;position:relative;z-index:1;
+  animation:fadeUp .7s ease-out both}
+.otp-logo{display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:1.75rem}
+.otp-logo svg{width:2.2rem;height:2.2rem}
+.otp-logo span{font-size:1.8rem;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,#fff,#c4b5fd);-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent}
+.otp-title{font-size:1.4rem;font-weight:700;text-align:center;margin-bottom:.4rem}
+.otp-sub{font-size:.9rem;color:var(--txt2);text-align:center;margin-bottom:2rem;line-height:1.6}
+.otp-sub span{color:var(--accent);font-weight:500}
+.inp-wrap{position:relative;margin-bottom:1.25rem}
+.inp-wrap label{display:block;font-size:.8rem;font-weight:600;color:var(--txt2);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:.5rem}
+.inp-wrap input{width:100%;background:rgba(10,15,30,.6);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:.85rem 1rem;color:var(--txt);font-family:inherit;
+  font-size:1rem;outline:none;transition:var(--t)}
+.inp-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.inp-wrap input.error-inp{border-color:var(--error);box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+.inp-err{font-size:.8rem;color:var(--error);margin-top:.4rem;display:none}
+.otp-boxes{display:flex;gap:.75rem;justify-content:center;margin-bottom:1.25rem}
+.otp-boxes input{width:52px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;
+  background:rgba(10,15,30,.6);border:1px solid var(--border);border-radius:var(--r-md);
+  color:var(--txt);font-family:inherit;outline:none;transition:var(--t)}
+.otp-boxes input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.otp-boxes input.filled{border-color:var(--primary);background:rgba(139,92,246,.1)}
+.otp-boxes input.error-inp{border-color:var(--error);box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+.otp-action-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;
+  background:linear-gradient(135deg,var(--primary),var(--primary-hover));
+  color:#fff;border:none;font-family:inherit;font-size:1rem;font-weight:600;
+  padding:.9rem;border-radius:var(--r-md);cursor:pointer;
+  box-shadow:0 4px 18px rgba(139,92,246,.35);transition:var(--t);margin-bottom:1rem}
+.otp-action-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,92,246,.5)}
+.otp-action-btn:disabled{opacity:.5;cursor:not-allowed}
+.otp-action-btn svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2}
+.otp-resend{text-align:center;font-size:.85rem;color:var(--txt2)}
+.otp-resend button{background:none;border:none;color:var(--accent);font-family:inherit;
+  font-size:.85rem;cursor:pointer;font-weight:500;transition:var(--t)}
+.otp-resend button:hover{color:var(--primary)}
+.otp-resend button:disabled{color:var(--txt3);cursor:not-allowed}
+.otp-step{display:none}
+.otp-step.active{display:block}
+.otp-reveal{background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(6,182,212,.1));
+  border:2px solid rgba(139,92,246,.4);border-radius:var(--r-md);
+  padding:1.25rem;text-align:center;margin-bottom:1.25rem}
+.otp-reveal p{font-size:.82rem;color:var(--txt2);margin-bottom:.5rem}
+.otp-reveal .otp-code{font-size:2.2rem;font-weight:800;letter-spacing:8px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.otp-demo-note{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);
+  border-radius:var(--r-sm);padding:.75rem 1rem;font-size:.82rem;color:var(--accent);
+  text-align:center;margin-bottom:1.25rem;line-height:1.5}
+
+/* ══════════════════════════════════════════
+   PAGE 1 — WELCOME
+══════════════════════════════════════════ */
+#page-welcome{
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.18;pointer-events:none}
+.orb-1{width:500px;height:500px;background:var(--primary);top:-150px;left:-150px;animation:floatOrb 9s ease-in-out infinite}
+.orb-2{width:420px;height:420px;background:var(--secondary);bottom:-100px;right:-100px;animation:floatOrb 11s ease-in-out infinite reverse}
+.orb-3{width:300px;height:300px;background:var(--accent);bottom:20%;left:30%;animation:floatOrb 7s ease-in-out 2s infinite}
+.welcome-box{text-align:center;padding:2.5rem 2rem;max-width:600px;width:100%;position:relative;z-index:1}
+.w-icon{font-size:4.5rem;display:block;margin-bottom:1.75rem;animation:fadeUp .7s ease-out both}
+.w-label{font-size:.95rem;letter-spacing:6px;text-transform:uppercase;color:#64748b;margin-bottom:.5rem;animation:fadeUp .7s .15s ease-out both}
+.w-title{font-size:clamp(4rem,14vw,7.5rem);font-weight:800;letter-spacing:-4px;line-height:1;
+  background:linear-gradient(135deg,#fff 0%,#c4b5fd 60%,var(--primary) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:1.25rem;animation:fadeUp .7s .25s ease-out both}
+.w-divider{width:56px;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary));
+  border-radius:999px;margin:0 auto 1.5rem;animation:fadeUp .7s .35s ease-out both}
+.w-tagline{font-size:1.05rem;font-weight:300;color:var(--txt2);line-height:1.8;margin-bottom:2.5rem;animation:fadeUp .7s .45s ease-out both}
+.w-btn{display:inline-flex;align-items:center;gap:.75rem;
+  background:linear-gradient(135deg,var(--primary),var(--primary-hover));
+  color:#fff;border:none;font-family:inherit;font-size:1.1rem;font-weight:600;
+  padding:1rem 3rem;border-radius:999px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(139,92,246,.45);
+  transition:transform .3s,box-shadow .3s;animation:fadeUp .7s .6s ease-out both}
+.w-btn:hover{transform:translateY(-3px);box-shadow:0 14px 44px rgba(139,92,246,.65)}
+.w-btn svg{width:20px;height:20px;flex-shrink:0}
+.lang-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;margin-top:2.5rem;animation:fadeUp .7s .8s ease-out both}
+.pill{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:999px;padding:.3rem .85rem;font-size:.85rem;color:var(--txt2);
+  transition:all .25s ease;cursor:default}
+.pill:hover{background:rgba(139,92,246,.18);border-color:rgba(139,92,246,.35);color:#e2e8f0;transform:translateY(-2px)}
+
+/* ══════════════════════════════════════════
+   PAGE 2 — APP
+══════════════════════════════════════════ */
+#page-app{flex-direction:column;justify-content:flex-start;padding:2rem}
+.app-wrap{width:100%;max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:1.75rem}
+.unsupported{position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,#7f1d1d,#991b1b);
+  color:#fef2f2;padding:.85rem 1.5rem;display:none;align-items:center;gap:.75rem;
+  font-size:.95rem;font-weight:500;z-index:10000;border-bottom:1px solid rgba(255,255,255,.1)}
+.glass{background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:var(--r-lg);
+  box-shadow:0 8px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.app-header{text-align:center;padding-top:.5rem;animation:fadeInDown .7s ease-out both;position:relative}
+.app-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.nav-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--txt2);
+  font-size:.85rem;text-decoration:none;background:none;border:none;cursor:pointer;
+  font-family:inherit;transition:var(--t);padding:.4rem .75rem;border-radius:var(--r-sm)}
+.nav-link:hover{color:var(--primary);background:rgba(139,92,246,.1)}
+.nav-link svg{width:16px;height:16px}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:.3rem}
+.logo-row svg{width:2.8rem;height:2.8rem}
+.logo-row h1{font-size:3.2rem;font-weight:700;letter-spacing:-1px;
+  background:linear-gradient(to right,#fff,#cbd5e1);-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:var(--txt2);font-size:.9rem;letter-spacing:3px;text-transform:uppercase}
+.controls-card{display:flex;align-items:center;justify-content:space-between;
+  padding:1.5rem 2rem;flex-wrap:wrap;gap:1.25rem;animation:fadeIn .8s ease-out both}
+.ctrl-group{flex:1;min-width:220px;display:flex;flex-direction:column;gap:.5rem}
+.ctrl-group label{font-size:.8rem;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:1.5px}
+.sel-wrap{display:flex;align-items:center;background:rgba(10,15,30,.55);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:.75rem 1rem;
+  transition:var(--t);min-height:52px}
+.sel-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.sel-wrap svg{color:var(--primary);width:1.4rem;height:1.4rem;margin-right:.75rem;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2}
+select{appearance:none;background:transparent;border:none;color:var(--txt);
+  width:100%;font-size:1rem;font-family:inherit;font-weight:500;cursor:pointer;outline:none}
+select option{background:#0d1530;color:var(--txt)}
+.swap-wrap{display:flex;align-items:flex-end;justify-content:center;padding-bottom:.25rem}
+.icon-btn{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--txt);
+  border-radius:50%;width:48px;height:48px;min-width:48px;min-height:48px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:var(--t);font-size:1.4rem}
+.icon-btn:hover{background:var(--primary);transform:rotate(180deg)}
+.icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2}
+.workspace{display:grid;grid-template-columns:1fr 1fr;gap:1.75rem}
+.panel{display:flex;flex-direction:column;overflow:hidden;animation:slideUp .7s ease-out both}
+.panel-head{display:flex;justify-content:space-between;align-items:center;
+  padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.18)}
+.panel-head h2{font-size:1.1rem;font-weight:600}
+.btn-primary,.btn-secondary{display:flex;align-items:center;gap:.5rem;
+  padding:.65rem 1.25rem;min-height:44px;border-radius:var(--r-sm);
+  font-family:inherit;font-weight:600;font-size:.9rem;cursor:pointer;
+  transition:var(--t);border:none;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-hover));
+  color:#fff;box-shadow:0 4px 18px rgba(139,92,246,.35)}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,92,246,.45)}
+.btn-primary.recording{background:linear-gradient(135deg,var(--error),#dc2626);
+  box-shadow:0 4px 18px rgba(239,68,68,.35);animation:pulseBtn 2s infinite}
+.btn-secondary{background:rgba(255,255,255,.08);color:var(--txt);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){background:rgba(255,255,255,.15);transform:translateY(-1px)}
+.btn-secondary:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary svg,.btn-secondary svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2}
+.textarea-wrap{padding:1.25rem 1.5rem;flex:1;display:flex;flex-direction:column}
+textarea{width:100%;height:190px;background:transparent;border:none;color:var(--txt);
+  font-family:inherit;font-size:1.4rem;resize:none;outline:none;line-height:1.6}
+textarea::placeholder{color:var(--txt3);font-size:1rem}
+.status{display:flex;align-items:center;gap:.5rem;margin-top:.75rem;font-size:.82rem;color:var(--txt2)}
+.pulse-dot{width:8px;height:8px;background:var(--error);border-radius:50%;flex-shrink:0;
+  animation:pulseDot 1.5s infinite ease-in-out}
+.wer-bar{padding:1.25rem 2rem;animation:slideUp .9s ease-out both}
+.wer-bar-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.wer-bar-info{display:flex;align-items:center;gap:1rem}
+.wer-bar-info svg{width:2rem;height:2rem;flex-shrink:0;fill:none;stroke:url(#grad1);stroke-width:1.5}
+.wer-bar-title{font-size:1rem;font-weight:600}
+.wer-bar-sub{font-size:.82rem;color:var(--txt2);margin-top:.1rem}
+.wer-bar-btn{display:inline-flex;align-items:center;gap:.5rem;
+  background:linear-gradient(135deg,var(--accent),var(--success));
+  color:#fff;border:none;font-family:inherit;font-size:.9rem;font-weight:600;
+  padding:.65rem 1.5rem;border-radius:999px;cursor:pointer;
+  transition:all .3s ease;white-space:nowrap}
+.wer-bar-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(6,182,212,.4)}
+.wer-bar-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+#toast-box{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;
+  gap:.75rem;z-index:9999;max-width:360px}
+.toast{background:var(--surface2);backdrop-filter:blur(12px);border-left:4px solid var(--primary);
+  padding:.9rem 1.25rem;border-radius:var(--r-sm);box-shadow:0 6px 20px rgba(0,0,0,.4);
+  color:#fff;display:flex;align-items:center;gap:.75rem;font-size:.9rem;
+  animation:slideInRight .3s ease-out both}
+.toast svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2}
+.toast.error{border-left-color:var(--error)}
+.toast.success{border-left-color:var(--success)}
+.toast.warning{border-left-color:var(--warning)}
+.toast-out{animation:fadeOut .3s ease-in forwards}
+
+/* ══════════════════════════════════════════
+   PAGE 3 — WER
+══════════════════════════════════════════ */
+#page-wer{flex-direction:column;justify-content:flex-start;padding:2rem}
+.wer-wrap{width:100%;max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:1.75rem}
+.back-btn{display:inline-flex;align-items:center;gap:.5rem;color:var(--txt2);
+  font-size:.95rem;background:none;border:none;cursor:pointer;font-family:inherit;
+  transition:var(--t);padding:.4rem 0}
+.back-btn:hover{color:var(--primary)}
+.back-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.wer-page-hdr{text-align:center}
+.wer-page-hdr h1{font-size:2rem;font-weight:700;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wer-page-hdr p{color:var(--txt2);margin-top:.4rem;font-size:.95rem}
+.card{padding:1.75rem 2rem}
+.card-label{font-size:.8rem;font-weight:600;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:1.25rem}
+.big-wer{text-align:center;padding:1.5rem 0 2rem}
+.big-wer .val{font-size:5rem;font-weight:700;line-height:1;
+  background:linear-gradient(135deg,var(--accent),var(--success));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.big-wer .lbl{color:var(--txt2);font-size:1rem;margin-top:.5rem}
+.big-wer .note{color:var(--txt3);font-size:.82rem;margin-top:.4rem}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.sbox{display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  padding:1.25rem 1rem;border-radius:var(--r-md)}
+.slbl{font-size:.75rem;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem}
+.sval{font-size:2rem;font-weight:700;color:var(--txt)}
+.tbox{background:rgba(10,15,30,.55);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:1.25rem 1.5rem}
+.tbox-lbl{font-size:.75rem;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.75rem}
+.tbox p{font-size:1.1rem;color:var(--txt);line-height:1.7;word-break:break-word}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.formula-box{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);
+  border-radius:var(--r-md);padding:1.25rem 1.5rem}
+.formula-box code{font-family:monospace;font-size:1rem;color:var(--accent);display:block;margin-bottom:.75rem}
+.formula-box p{color:var(--txt2);font-size:.88rem;line-height:1.7}
+.no-data-box{text-align:center;padding:3rem 2rem}
+.no-data-box p{color:var(--txt3);font-size:1rem;margin-bottom:1.5rem}
+.no-data-btn{display:inline-flex;align-items:center;gap:.5rem;
+  background:linear-gradient(135deg,var(--primary),var(--primary-hover));
+  color:#fff;border:none;font-family:inherit;padding:.75rem 1.75rem;
+  border-radius:999px;font-weight:600;font-size:.95rem;cursor:pointer;transition:all .3s}
+.no-data-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.4)}
+.no-data-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}50%{transform:translate(18px,-18px)}}
+@keyframes pulseBtn{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}70%{box-shadow:0 0 0 12px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+@keyframes pulseDot{0%{transform:scale(.9);box-shadow:0 0 0 0 rgba(239,68,68,.8)}70%{transform:scale(1);box-shadow:0 0 0 7px rgba(239,68,68,0)}100%{transform:scale(.9);box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:850px){.workspace{grid-template-columns:1fr}}
+@media(max-width:600px){
+  #page-app,#page-wer{padding:.75rem}
+  .logo-row h1{font-size:2rem}
+  .logo-row img{width:30px;height:30px}
+  .subtitle{font-size:.75rem;letter-spacing:2px}
+  .app-nav{flex-wrap:wrap;gap:.4rem}
+  .nav-link{font-size:.75rem;padding:.3rem .5rem}
+  .controls-card{padding:1rem;flex-direction:column;gap:.75rem}
+  .swap-wrap{display:none}
+  .panel-head{padding:.85rem 1rem;flex-wrap:wrap;gap:.5rem}
+  .panel-head h2{font-size:1rem}
+  .textarea-wrap{padding:.85rem 1rem}
+  textarea{font-size:1.2rem;height:120px}
+  .wer-bar{padding:1rem}
+  .wer-bar-inner{flex-direction:column;align-items:flex-start}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .compare-grid{grid-template-columns:1fr}
+  .big-wer .val{font-size:3.5rem}
+  .card{padding:1rem}
+  .btn-primary,.btn-secondary{min-height:52px;padding:.85rem 1rem;font-size:1rem;border-radius:12px}
+  .w-title{letter-spacing:-2px}
+  .w-btn{font-size:1rem;padding:.9rem 2.25rem}
+  .sel-wrap{min-height:56px;padding:.85rem 1rem}
+  select{font-size:1rem}
+  .icon-btn{width:52px;height:52px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- SVG defs for gradient icons -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ═══════════════════════════════════════
+     PAGE 0 — OTP LOGIN
+═══════════════════════════════════════ -->
+<div id="page-otp" class="page">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="otp-card">
+
+    <div class="otp-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="url(#grad2)" stroke-width="1.5">
+        <path d="M2 12h2m16 0h2M12 2v2m0 16v2"/>
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 8c-2.5 0-4 1.5-4 4s1.5 4 4 4"/>
+      </svg>
+      <span>Voixa</span>
+    </div>
+
+    <!-- Step 1: Email -->
+    <div class="otp-step active" id="step-email">
+      <h2 class="otp-title">Sign in to Voixa</h2>
+      <p class="otp-sub">Enter your email address to receive a verification code.</p>
+      <div class="inp-wrap">
+        <label for="email-inp">Email Address</label>
+        <input type="email" id="email-inp" placeholder="you@example.com" autocomplete="email">
+        <div class="inp-err" id="email-err">Please enter a valid email address.</div>
+      </div>
+      <button class="otp-action-btn" id="send-otp-btn" onclick="sendOtp()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span id="send-btn-label">Send OTP</span>
+      </button>
+    </div>
+
+    <!-- Step 2: OTP verify -->
+    <div class="otp-step" id="step-verify">
+      <h2 class="otp-title">Verify OTP</h2>
+      <p class="otp-sub">A 6-digit code was sent to <span id="email-display"></span>.<br>Check your inbox (and spam folder).</p>
+      <!-- Shown only when EmailJS is not configured -->
+      <div id="otp-reveal-box" class="otp-reveal" style="display:none">
+        <p>Your verification code is:</p>
+        <div class="otp-code" id="otp-display">——————</div>
+      </div>
+      <div class="otp-boxes">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" class="otp-digit" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <div class="inp-err" id="otp-err" style="text-align:center;margin-bottom:.75rem">Incorrect OTP. Please try again.</div>
+      <button class="otp-action-btn" id="verify-otp-btn" onclick="verifyOtp()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Verify &amp; Continue
+      </button>
+      <div class="otp-resend">
+        Didn't receive it? <button id="resend-btn" onclick="resendOtp()">Resend OTP</button>
+        <span id="resend-timer"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 1 — WELCOME
+═══════════════════════════════════════ -->
+<div id="page-welcome" class="page">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="welcome-box">
+    <img src="https://i.ibb.co/d05PD4rY/logo.jpg" alt="Voixa Logo" style="width:80px;height:80px;object-fit:cover;display:block;margin:0 auto 1.5rem;border-radius:50%;animation:fadeUp .7s ease-out both;filter:drop-shadow(0 0 20px rgba(139,92,246,0.6));border:2px solid rgba(139,92,246,0.4)">
+    <p class="w-label">Welcome to</p>
+    <h1 class="w-title">Voixa</h1>
+    <div class="w-divider"></div>
+    <p class="w-tagline">Speak in any Indian language.<br>Transcribe, translate &amp; hear it — instantly.</p>
+    <button class="w-btn" onclick="showPage('app')">
+      Continue
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <div class="lang-pills">
+      <span class="pill">हिन्दी</span><span class="pill">தமிழ்</span>
+      <span class="pill">తెలుగు</span><span class="pill">മലയാളം</span>
+      <span class="pill">ಕನ್ನಡ</span><span class="pill">বাংলা</span>
+      <span class="pill">मराठी</span><span class="pill">ગુજરાતી</span>
+      <span class="pill">ਪੰਜਾਬੀ</span><span class="pill">ଓଡ଼ିଆ</span>
+      <span class="pill">اردو</span><span class="pill">অসমীয়া</span>
+      <span class="pill">मैथिली</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 2 — APP
+═══════════════════════════════════════ -->
+<div id="page-app" class="page">
+  <div class="unsupported" id="unsupported-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Speech Recognition is not supported. Please use <strong>Chrome</strong> or <strong>Edge</strong>.</span>
+  </div>
+  <div class="app-wrap">
+    <header>
+      <div class="app-nav">
+        <button class="nav-link" onclick="showPage('welcome')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span id="user-email-display" style="font-size:.8rem;color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <button class="nav-link" onclick="goToWer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            WER
+          </button>
+          <button class="nav-link" onclick="logout()" style="color:#ef4444">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
+      </div>
+      <div class="logo-row">
+        <img src="https://i.ibb.co/d05PD4rY/logo.jpg" alt="Voixa Logo" style="width:38px;height:38px;object-fit:cover;border-radius:50%;border:2px solid rgba(139,92,246,0.5);filter:drop-shadow(0 0 8px rgba(139,92,246,0.5))">
+        <h1>Voixa</h1>
+      </div>
+      <p class="subtitle">Indic Speech-to-Text &amp; Translation</p>
+    </header>
+
+    <!-- Language selectors -->
+    <section class="controls-card glass">
+      <div class="ctrl-group">
+        <label for="source-lang">Spoken Language</label>
+        <div class="sel-wrap">
+          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <select id="source-lang"></select>
+        </div>
+      </div>
+      <div class="swap-wrap">
+        <button class="icon-btn" id="swap-btn" title="Swap Languages">
+          <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </button>
+      </div>
+      <div class="ctrl-group">
+        <label for="target-lang">Translation Target</label>
+        <div class="sel-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <select id="target-lang"></select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panels -->
+    <section class="workspace">
+      <div class="panel glass">
+        <div class="panel-head">
+          <h2>Transcription</h2>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="btn-primary" id="record-btn">
+              <svg id="rec-icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <span id="rec-label">Start Recording</span>
+            </button>
+            <label class="btn-secondary" style="cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;min-height:44px;border-radius:10px;font-family:inherit;font-weight:600;font-size:.9rem;background:rgba(255,255,255,.08);color:#f1f5f9;border:1px solid rgba(255,255,255,.09);transition:all .3s;white-space:nowrap" title="Upload audio file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Audio
+              <input type="file" id="audio-upload" accept="audio/*" style="display:none" onchange="handleAudioUpload(event)">
+            </label>
+          </div>
+        </div>
+        <div class="textarea-wrap">
+          <textarea id="source-text" placeholder="Your spoken text will appear here…"></textarea>
+          <div class="status">
+            <span class="pulse-dot" id="rec-dot" style="display:none"></span>
+            <span id="rec-status">Ready to record</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-head">
+          <h2>Translation</h2>
+          <button class="btn-secondary" id="play-btn" disabled>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>Listen</span>
+          </button>
+        </div>
+        <div class="textarea-wrap">
+          <textarea id="target-text" placeholder="Translation will appear here…" readonly></textarea>
+          <div class="status"><span id="tgt-status">Awaiting translation</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WER shortcut -->
+    <section class="wer-bar glass">
+      <div class="wer-bar-inner">
+        <div class="wer-bar-info">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <div>
+            <p class="wer-bar-title">Word Error Rate Analysis</p>
+            <p class="wer-bar-sub">View detailed transcription accuracy metrics</p>
+          </div>
+        </div>
+        <button class="wer-bar-btn" onclick="goToWer()">
+          View WER
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </section>
+  </div>
+  <div id="toast-box"></div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 3 — WER
+═══════════════════════════════════════ -->
+<div id="page-wer" class="page">
+  <div class="wer-wrap">
+    <button class="back-btn" onclick="showPage('app')">
+      <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Voixa
+    </button>
+    <div class="wer-page-hdr">
+      <h1>WER Analysis</h1>
+      <p>Transcription accuracy from your last recording session</p>
+    </div>
+
+    <div id="wer-nodata" class="glass no-data-box" style="display:none">
+      <p>No transcription data yet. Go back and record something first.</p>
+      <button class="no-data-btn" onclick="showPage('app')">
+        <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+        Start Recording
+      </button>
+    </div>
+
+    <div id="wer-data" style="display:none;flex-direction:column;gap:1.75rem">
+      <div class="glass card">
+        <div class="big-wer">
+          <div class="val" id="w-wer">—</div>
+          <div class="lbl">Word Error Rate</div>
+          <div class="note" id="w-note"></div>
+        </div>
+        <div class="stats-grid">
+          <div class="sbox"><span class="slbl">Substitutions</span><span class="sval" id="w-sub">0</span></div>
+          <div class="sbox"><span class="slbl">Deletions</span><span class="sval" id="w-del">0</span></div>
+          <div class="sbox"><span class="slbl">Insertions</span><span class="sval" id="w-ins">0</span></div>
+        </div>
+      </div>
+
+      <div class="glass card">
+        <div class="card-label">Your Transcription</div>
+        <div class="tbox"><div class="tbox-lbl">Recognized Text</div><p id="w-transcript">—</p></div>
+      </div>
+
+      <div class="glass card" id="w-compare" style="display:none">
+        <div class="card-label">Session Comparison</div>
+        <div class="compare-grid">
+          <div class="tbox"><div class="tbox-lbl">Previous Session</div><p id="w-ref">—</p></div>
+          <div class="tbox"><div class="tbox-lbl">Current Session</div><p id="w-hyp">—</p></div>
+        </div>
+      </div>
+
+      <div class="glass card">
+        <div class="card-label">How WER is Calculated</div>
+        <div class="formula-box">
+          <code>WER = (S + D + I) / N × 100%</code>
+          <p>
+            <strong style="color:#e2e8f0">S</strong> = Substitutions &nbsp;·&nbsp;
+            <strong style="color:#e2e8f0">D</strong> = Deletions &nbsp;·&nbsp;
+            <strong style="color:#e2e8f0">I</strong> = Insertions &nbsp;·&nbsp;
+            <strong style="color:#e2e8f0">N</strong> = Total reference words.<br><br>
+            WER compares your current session against the previous one. First recording shows 0% — record again to compare.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+// ── Page navigation ───────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goToWer() {
+  renderWer();
+  showPage('wer');
+}
+
+// ── Session check on load — skip OTP if already logged in ─────────────────────
+async function initSession() {
+  // Wait for Supabase to load
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (session && session.user) {
+    // Valid session exists — go straight to welcome
+    localStorage.setItem('voixa_user_email', session.user.email);
+    showPage('welcome');
+    updateUserDisplay(session.user.email);
+  } else {
+    // No session — show OTP login
+    showPage('otp');
+  }
+}
+
+function updateUserDisplay(email) {
+  const el = document.getElementById('user-email-display');
+  if (el) el.textContent = email;
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+async function logout() {
+  await _supabase.auth.signOut();
+  localStorage.removeItem('voixa_user_email');
+  localStorage.removeItem('voixa_werData');
+  localStorage.removeItem('voixa_lastTranscript');
+  // Reset OTP form
+  document.getElementById('email-inp').value = '';
+  document.getElementById('step-email').classList.add('active');
+  document.getElementById('step-verify').classList.remove('active');
+  document.querySelectorAll('.otp-digit').forEach(i => { i.value=''; i.classList.remove('filled','error-inp'); });
+  showPage('otp');
+  toast('Logged out successfully.', 'success');
+}
+
+// ── Languages ─────────────────────────────────────────────────────────────────
+const LANGS = [
+  {label:'Hindi (हिन्दी)',    value:'hi-IN', iso:'hi'},
+  {label:'Tamil (தமிழ்)',     value:'ta-IN', iso:'ta'},
+  {label:'Telugu (తెలుగు)',   value:'te-IN', iso:'te'},
+  {label:'Malayalam (മലയാളം)',value:'ml-IN', iso:'ml'},
+  {label:'Kannada (ಕನ್ನಡ)',   value:'kn-IN', iso:'kn'},
+  {label:'Bengali (বাংলা)',   value:'bn-IN', iso:'bn'},
+  {label:'Marathi (मराठी)',   value:'mr-IN', iso:'mr'},
+  {label:'Gujarati (ગુજરાતી)',value:'gu-IN', iso:'gu'},
+  {label:'Punjabi (ਪੰਜਾਬੀ)',  value:'pa-IN', iso:'pa'},
+  {label:'Odia (ଓଡ଼ିଆ)',      value:'or-IN', iso:'or'},
+  {label:'Urdu (اردو)',       value:'ur-IN', iso:'ur'},
+  {label:'Assamese (অসমীয়া)',value:'as-IN', iso:'as'},
+  {label:'Maithili (मैथिली)', value:'mai-IN',iso:'mai'},
+  {label:'Santali (ᱥᱟᱱᱛᱟᱲᱤ)',value:'sat-IN',iso:'sat'},
+  {label:'Kashmiri (کٲشُر)',  value:'ks-IN', iso:'ks'},
+  {label:'Nepali (नेपाली)',   value:'ne-IN', iso:'ne'},
+  {label:'Sindhi (سنڌي)',     value:'sd-IN', iso:'sd'},
+  {label:'Konkani (कोंकणी)',  value:'kok-IN',iso:'kok'},
+  {label:'Dogri (डोगरी)',     value:'doi-IN',iso:'doi'},
+  {label:'Manipuri (মৈতৈলোন্)',value:'mni-IN',iso:'mni'},
+];
+
+const srcSel = document.getElementById('source-lang');
+const tgtSel = document.getElementById('target-lang');
+LANGS.forEach(l => {
+  srcSel.appendChild(new Option(l.label, l.value));
+  tgtSel.appendChild(new Option(l.label, l.value));
+});
+srcSel.value = 'hi-IN';
+tgtSel.value = 'ta-IN';
+
+function getIso(bcp) {
+  const l = LANGS.find(x => x.value === bcp);
+  return l ? l.iso : bcp.split('-')[0];
+}
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const recordBtn   = document.getElementById('record-btn');
+const recIcon     = document.getElementById('rec-icon');
+const recLabel    = document.getElementById('rec-label');
+const recDot      = document.getElementById('rec-dot');
+const recStatus   = document.getElementById('rec-status');
+const playBtn     = document.getElementById('play-btn');
+const swapBtn     = document.getElementById('swap-btn');
+const sourceText  = document.getElementById('source-text');
+const targetText  = document.getElementById('target-text');
+const tgtStatus   = document.getElementById('tgt-status');
+const toastBox    = document.getElementById('toast-box');
+const banner      = document.getElementById('unsupported-banner');
+
+// ── Browser check ─────────────────────────────────────────────────────────────
+const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechAPI) {
+  banner.style.display = 'flex';
+  recordBtn.disabled = true;
+  recordBtn.style.opacity = '0.5';
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const icons = {
+    info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    error:'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    success:'<polyline points="20 6 9 17 4 12"/>',
+    warning:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[type]||icons.info}</svg><span>${msg}</span>`;
+  toastBox.appendChild(t);
+  setTimeout(() => { t.classList.add('toast-out'); t.addEventListener('animationend', () => t.remove()); }, 3500);
+}
+
+// ── Speech Recognition ────────────────────────────────────────────────────────
+let recognition = null, isRecording = false, transTimer = null;
+
+const ERR = {
+  'not-allowed':'Microphone access denied. Allow mic permissions in browser settings.',
+  'no-speech':'No speech detected. Try again.',
+  'network':'Network error during recognition.',
+  'audio-capture':'No microphone found.',
+  'service-not-allowed':'Speech service not allowed. Try Chrome or Edge.',
+  'language-not-supported':'Language not supported by your browser.',
+};
+
+function startRecording() {
+  if (!SpeechAPI) return;
+
+  sourceText.value = '';
+  targetText.value = '';
+  tgtStatus.textContent = 'Awaiting translation';
+  playBtn.disabled = true;
+
+  // Single accumulated final transcript — persists across restarts
+  let finalText = '';
+  // Normalized set to catch Tamil near-duplicates
+  const normalize = t => t.trim().replace(/\s+/g, ' ').toLowerCase();
+  const seenNorm  = new Set();
+
+  recognition = new SpeechAPI();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = srcSel.value;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    recStatus.textContent = 'Listening… speak now';
+    recDot.style.display = 'inline-block';
+    recordBtn.classList.add('recording');
+    recLabel.textContent = 'Stop Recording';
+    recIcon.innerHTML = '<rect x="3" y="3" width="18" height="18" rx="2"/>';
+  };
+
+  recognition.onresult = e => {
+    // Only process new results from e.resultIndex onwards
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const raw = e.results[i][0].transcript;
+      const seg = raw.trim();
+      if (!seg) continue;
+
+      if (e.results[i].isFinal) {
+        const key = normalize(seg);
+        // Check if this normalized segment is already the end of finalText
+        const currentNorm = normalize(finalText);
+        if (!currentNorm.endsWith(key) && !seenNorm.has(key)) {
+          seenNorm.add(key);
+          finalText += seg + ' ';
+        }
+      } else {
+        interim += seg;
+      }
+    }
+    sourceText.value = (finalText + interim).trim();
+    sourceText.scrollTop = sourceText.scrollHeight;
+  };
+
+  recognition.onerror = e => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    toast(ERR[e.error] || `Error: ${e.error}`, 'error');
+    stopRecording();
+  };
+
+  // Restart only if still recording — reuse same finalText/seenNorm
+  recognition.onend = () => {
+    if (!isRecording) return;
+    setTimeout(() => {
+      if (!isRecording) return;
+      // Create fresh recognition instance but keep accumulated text
+      recognition = new SpeechAPI();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = srcSel.value;
+      recognition.onstart  = arguments.callee; // won't work — reassign below
+      recognition.onresult = recognition.onresult; // reassign below
+      // Reassign all handlers by calling a helper
+      attachHandlers(recognition, () => finalText, (t) => { finalText = t; }, seenNorm, normalize);
+      try { recognition.start(); } catch(_){}
+    }, 300);
+  };
+
+  // Helper to attach handlers to a recognition instance
+  function attachHandlers(rec, getFinal, setFinal, seen, norm) {
+    rec.onstart = () => {
+      isRecording = true;
+      recStatus.textContent = 'Listening… speak now';
+      recDot.style.display = 'inline-block';
+      recordBtn.classList.add('recording');
+      recLabel.textContent = 'Stop Recording';
+      recIcon.innerHTML = '<rect x="3" y="3" width="18" height="18" rx="2"/>';
+    };
+    rec.onresult = e => {
+      let interim = '';
+      let ft = getFinal();
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const seg = e.results[i][0].transcript.trim();
+        if (!seg) continue;
+        if (e.results[i].isFinal) {
+          const key = norm(seg);
+          if (!norm(ft).endsWith(key) && !seen.has(key)) {
+            seen.add(key);
+            ft += seg + ' ';
+          }
+        } else {
+          interim += seg;
+        }
+      }
+      setFinal(ft);
+      sourceText.value = (ft + interim).trim();
+      sourceText.scrollTop = sourceText.scrollHeight;
+    };
+    rec.onerror = e => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      toast(ERR[e.error] || `Error: ${e.error}`, 'error');
+      stopRecording();
+    };
+    rec.onend = () => {
+      if (!isRecording) return;
+      setTimeout(() => {
+        if (!isRecording) return;
+        const newRec = new SpeechAPI();
+        newRec.continuous = true;
+        newRec.interimResults = true;
+        newRec.lang = srcSel.value;
+        attachHandlers(newRec, getFinal, setFinal, seen, norm);
+        recognition = newRec;
+        try { newRec.start(); } catch(_){}
+      }, 300);
+    };
+  }
+
+  // Attach handlers to initial recognition instance
+  attachHandlers(recognition, () => finalText, (t) => { finalText = t; }, seenNorm, normalize);
+  try { recognition.start(); } catch(e) { toast('Could not start recording.', 'error'); }
+}
+
+function stopRecording() {
+  isRecording = false;
+  if (recognition) { recognition.onend = null; recognition.stop(); recognition = null; }
+  recStatus.textContent = 'Ready to record';
+  recDot.style.display = 'none';
+  recordBtn.classList.remove('recording');
+  recLabel.textContent = 'Start Recording';
+  recIcon.innerHTML = '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>';
+  // Sync mobile bar button
+  const mob = document.getElementById('record-btn-mobile');
+  if (mob) { mob.classList.remove('recording'); mob.childNodes[1].textContent = 'Start Recording'; }
+
+  const transcript = sourceText.value.trim();
+  if (transcript) {
+    const words = transcript.toLowerCase().split(/\s+/).filter(Boolean);
+    const prev  = localStorage.getItem('voixa_lastTranscript') || '';
+    const prevW = prev.toLowerCase().split(/\s+/).filter(Boolean);
+    let wr = {wer:'0.00', sub:0, del:0, ins:0};
+    if (prevW.length && words.length) {
+      const r = levenshtein(prevW, words);
+      wr = {wer:(Math.min(r.wer,1)*100).toFixed(2), sub:r.sub, del:r.del, ins:r.ins};
+    }
+    localStorage.setItem('voixa_werData', JSON.stringify({
+      wer:wr.wer, sub:wr.sub, del:wr.del, ins:wr.ins,
+      ref: prev || transcript, hyp: transcript, transcript
+    }));
+    localStorage.setItem('voixa_lastTranscript', transcript);
+    translateText();
+  }
+}
+
+recordBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
+
+// ── Translation ───────────────────────────────────────────────────────────────
+function schedTrans() { clearTimeout(transTimer); transTimer = setTimeout(translateText, 1200); }
+
+async function translateText() {
+  const text = sourceText.value.trim();
+  if (!text) return;
+  const src = getIso(srcSel.value), tgt = getIso(tgtSel.value);
+
+  // Same language — copy directly
+  if (src === tgt) {
+    targetText.value = text;
+    tgtStatus.textContent = 'Same language — no translation needed.';
+    playBtn.disabled = false;
+    speakText(text);
+    return;
+  }
+
+  tgtStatus.textContent = 'Translating…';
+  targetText.value = '';
+
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${tgt}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const translated = data[0].map(s => s[0]).join('');
+    targetText.value = translated;
+    tgtStatus.textContent = 'Translation complete';
+    playBtn.disabled = false;
+    // Pass text directly to avoid timing issues
+    speakText(translated);
+  } catch(err) {
+    tgtStatus.textContent = 'Translation failed';
+    toast('Translation failed. Check your internet connection.', 'error');
+    console.error('Translation error:', err);
+  }
+}
+
+// Translation triggered only on stop recording or manual input (not during live recording)
+sourceText.addEventListener('input', () => { if (!isRecording) schedTrans(); });
+tgtSel.addEventListener('change', () => { if (sourceText.value.trim()) translateText(); });
+srcSel.addEventListener('change', () => {
+  if (isRecording) { stopRecording(); toast('Language changed. Restart recording.', 'warning'); }
+});
+
+// ── Audio file upload → transcribe via Web Speech API + AudioContext ──────────
+async function handleAudioUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  if (!SpeechAPI) {
+    toast('Speech Recognition not supported. Use Chrome or Edge.', 'error');
+    return;
+  }
+
+  sourceText.value = '';
+  targetText.value = '';
+  tgtStatus.textContent = 'Awaiting translation';
+  recStatus.textContent = 'Processing audio…';
+  toast('Processing audio file…', 'info');
+
+  try {
+    // Decode audio file
+    const arrayBuffer = await file.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    // Create offline context to render audio
+    const offlineCtx = new OfflineAudioContext(
+      audioBuffer.numberOfChannels,
+      audioBuffer.length,
+      audioBuffer.sampleRate
+    );
+    const source = offlineCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(offlineCtx.destination);
+    source.start();
+
+    // Use SpeechRecognition on the live mic while playing audio through speakers
+    // This is the only browser-native way — play audio + recognize simultaneously
+    const url = URL.createObjectURL(file);
+    const audio = new Audio(url);
+
+    const rec = new SpeechAPI();
+    rec.lang = srcSel.value;
+    rec.continuous = true;
+    rec.interimResults = true;
+    let final = '';
+
+    rec.onresult = e => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t + ' ';
+        else interim += t;
+      }
+      sourceText.value = final + interim;
+      sourceText.scrollTop = sourceText.scrollHeight;
+    };
+
+    rec.onerror = e => {
+      if (e.error !== 'no-speech') toast('Recognition error: ' + e.error, 'error');
+    };
+
+    rec.onend = () => {
+      recStatus.textContent = 'Ready to record';
+      if (final.trim()) {
+        sourceText.value = final.trim();
+        translateText();
+        toast('Audio transcription complete!', 'success');
+      } else {
+        toast('No speech detected. Make sure your microphone can hear the audio.', 'warning');
+      }
+      URL.revokeObjectURL(url);
+      audioCtx.close();
+    };
+
+    // Start recognition then play audio
+    rec.start();
+    audio.play();
+    audio.onended = () => { try { rec.stop(); } catch(_){} };
+
+  } catch (err) {
+    recStatus.textContent = 'Ready to record';
+    toast('Could not process audio: ' + err.message, 'error');
+  }
+}
+
+// ── TTS ───────────────────────────────────────────────────────────────────────
+function speakText(textOverride) {
+  const text = textOverride || targetText.value.trim();
+  if (!text) return;
+  const iso  = getIso(tgtSel.value);
+  const lang = tgtSel.value;
+
+  window.speechSynthesis.cancel();
+
+  const doSpeak = (voices) => {
+    const utt   = new SpeechSynthesisUtterance(text);
+    utt.lang    = lang;
+    utt.rate    = 0.85;
+    utt.pitch   = 1;
+    const exact  = voices.find(v => v.lang === lang);
+    const prefix = voices.find(v => v.lang.toLowerCase().startsWith(iso.toLowerCase()));
+    if (exact)        utt.voice = exact;
+    else if (prefix)  utt.voice = prefix;
+    window.speechSynthesis.speak(utt);
+  };
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    doSpeak(voices);
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => doSpeak(window.speechSynthesis.getVoices());
+  }
+}
+
+playBtn.addEventListener('click', () => {
+  if (!targetText.value.trim()) { toast('No translated text to play.', 'warning'); return; }
+  speakText();
+  toast('Playing translation…', 'info');
+});
+
+// ── Swap ──────────────────────────────────────────────────────────────────────
+swapBtn.addEventListener('click', () => {
+  [srcSel.value, tgtSel.value] = [tgtSel.value, srcSel.value];
+  [sourceText.value, targetText.value] = [targetText.value, sourceText.value];
+  if (sourceText.value.trim()) schedTrans();
+});
+
+// ── Levenshtein WER ───────────────────────────────────────────────────────────
+function levenshtein(ref, hyp) {
+  const r = ref.length, h = hyp.length;
+  const dp = Array.from({length:r+1}, (_,i) => Array.from({length:h+1}, (_,j) => [0,0,0,0]));
+  for (let i=0;i<=r;i++) dp[i][0]=[i,0,i,0];
+  for (let j=0;j<=h;j++) dp[0][j]=[j,0,0,j];
+  for (let i=1;i<=r;i++) for (let j=1;j<=h;j++) {
+    if (ref[i-1]===hyp[j-1]) { dp[i][j]=[...dp[i-1][j-1]]; continue; }
+    const s=[dp[i-1][j-1][0]+1,dp[i-1][j-1][1]+1,dp[i-1][j-1][2],dp[i-1][j-1][3]];
+    const d=[dp[i-1][j][0]+1,  dp[i-1][j][1],    dp[i-1][j][2]+1, dp[i-1][j][3]];
+    const n=[dp[i][j-1][0]+1,  dp[i][j-1][1],    dp[i][j-1][2],   dp[i][j-1][3]+1];
+    dp[i][j]=[s,d,n].reduce((a,b)=>a[0]<=b[0]?a:b);
+  }
+  const [,sub,del,ins]=dp[r][h];
+  return {wer:dp[r][h][0]/r, sub, del, ins};
+}
+
+// ── WER page render ───────────────────────────────────────────────────────────
+function renderWer() {
+  const raw = localStorage.getItem('voixa_werData');
+  if (!raw) {
+    document.getElementById('wer-nodata').style.display = 'block';
+    document.getElementById('wer-data').style.display = 'none';
+    return;
+  }
+  const d = JSON.parse(raw);
+  document.getElementById('wer-nodata').style.display = 'none';
+  const container = document.getElementById('wer-data');
+  container.style.display = 'flex';
+  document.getElementById('w-wer').textContent  = d.wer + '%';
+  document.getElementById('w-sub').textContent  = d.sub;
+  document.getElementById('w-del').textContent  = d.del;
+  document.getElementById('w-ins').textContent  = d.ins;
+  document.getElementById('w-note').textContent = (d.ref === d.hyp || !d.ref)
+    ? 'First session — record again to compare sessions'
+    : 'Compared against previous recording session';
+  document.getElementById('w-transcript').textContent = d.transcript || d.hyp || '—';
+  if (d.ref && d.ref !== d.hyp) {
+    document.getElementById('w-compare').style.display = 'block';
+    document.getElementById('w-ref').textContent = d.ref;
+    document.getElementById('w-hyp').textContent = d.hyp;
+  } else {
+    document.getElementById('w-compare').style.display = 'none';
+  }
+}
+
+// Load voices async — preload on startup
+window.speechSynthesis.getVoices();
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+// ── Supabase config ───────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://xitfnswnligowoquawiv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpdGZuc3dubGlnb3dvcXVhd2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMzM0MzIsImV4cCI6MjA5MTgwOTQzMn0.sAKlYpLr1UjNC-4XpA2jpcSpt2EgwS6lgnA9tunrBiY';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── OTP Logic ─────────────────────────────────────────────────────────────────
+let resendInterval = null;
+
+async function sendOtp() {
+  const emailInp = document.getElementById('email-inp');
+  const emailErr = document.getElementById('email-err');
+  const sendBtn  = document.getElementById('send-otp-btn');
+  const btnLabel = document.getElementById('send-btn-label');
+  const email    = emailInp.value.trim();
+  const valid    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  emailInp.classList.remove('error-inp');
+  emailErr.style.display = 'none';
+
+  if (!valid) {
+    emailInp.classList.add('error-inp');
+    emailErr.style.display = 'block';
+    return;
+  }
+
+  sendBtn.disabled = true;
+  btnLabel.textContent = 'Sending…';
+
+  const { error } = await _supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, emailRedirectTo: null }
+  });
+
+  sendBtn.disabled = false;
+  btnLabel.textContent = 'Send OTP';
+
+  if (error) {
+    toast('Failed to send OTP: ' + error.message, 'error');
+    return;
+  }
+
+  document.getElementById('email-display').textContent = email;
+  document.getElementById('otp-reveal-box').style.display = 'none';
+  document.getElementById('step-email').classList.remove('active');
+  document.getElementById('step-verify').classList.add('active');
+  document.querySelectorAll('.otp-digit')[0].focus();
+  startResendTimer(60);
+  toast('OTP sent to ' + email, 'success');
+}
+
+async function resendOtp() {
+  const email = document.getElementById('email-display').textContent;
+  document.getElementById('resend-btn').disabled = true;
+  const { error } = await _supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, emailRedirectTo: null }
+  });
+  if (error) toast('Failed to resend: ' + error.message, 'error');
+  else toast('New OTP sent to ' + email, 'success');
+  document.querySelectorAll('.otp-digit').forEach(i => { i.value=''; i.classList.remove('filled','error-inp'); });
+  document.querySelectorAll('.otp-digit')[0].focus();
+  document.getElementById('otp-err').style.display = 'none';
+  startResendTimer(60);
+}
+
+function startResendTimer(secs) {
+  const btn = document.getElementById('resend-btn');
+  const timer = document.getElementById('resend-timer');
+  btn.disabled = true;
+  clearInterval(resendInterval);
+  let s = secs;
+  timer.textContent = ` (${s}s)`;
+  resendInterval = setInterval(() => {
+    s--;
+    if (s <= 0) {
+      clearInterval(resendInterval);
+      btn.disabled = false;
+      timer.textContent = '';
+    } else {
+      timer.textContent = ` (${s}s)`;
+    }
+  }, 1000);
+}
+
+async function verifyOtp() {
+  const digits = [...document.querySelectorAll('.otp-digit')].map(i => i.value).join('');
+  const errEl  = document.getElementById('otp-err');
+  const btn    = document.getElementById('verify-otp-btn');
+  document.querySelectorAll('.otp-digit').forEach(i => i.classList.remove('error-inp'));
+  errEl.style.display = 'none';
+
+  if (digits.length < 6) {
+    document.querySelectorAll('.otp-digit').forEach(i => { if(!i.value) i.classList.add('error-inp'); });
+    errEl.textContent = 'Please enter all 6 digits.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.querySelector('span') ? btn.querySelector('span').textContent = 'Verifying…' : null;
+  btn.textContent = 'Verifying…';
+
+  const email = document.getElementById('email-display').textContent;
+  const { error } = await _supabase.auth.verifyOtp({
+    email,
+    token: digits,
+    type: 'email'
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polyline points="20 6 9 17 4 12"/></svg> Verify &amp; Continue';
+
+  if (error) {
+    document.querySelectorAll('.otp-digit').forEach(i => i.classList.add('error-inp'));
+    errEl.textContent = 'Incorrect OTP. Please try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  clearInterval(resendInterval);
+  localStorage.setItem('voixa_user_email', email);
+  updateUserDisplay(email);
+  toast('Email verified! Welcome to Voixa.', 'success');
+  setTimeout(() => showPage('welcome'), 800);
+}
+
+// OTP box auto-advance & backspace
+document.querySelectorAll('.otp-digit').forEach((inp, idx, all) => {
+  inp.addEventListener('input', e => {
+    const val = e.target.value.replace(/\D/g,'');
+    e.target.value = val ? val[0] : '';
+    inp.classList.toggle('filled', !!val);
+    inp.classList.remove('error-inp');
+    document.getElementById('otp-err').style.display = 'none';
+    if (val && idx < all.length - 1) all[idx + 1].focus();
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !inp.value && idx > 0) all[idx - 1].focus();
+    if (e.key === 'Enter') verifyOtp();
+  });
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    const pasted = (e.clipboardData.getData('text')).replace(/\D/g,'').slice(0,6);
+    [...pasted].forEach((ch, i) => { if(all[i]){ all[i].value=ch; all[i].classList.add('filled'); } });
+    if (all[pasted.length]) all[pasted.length].focus();
+    else all[all.length-1].focus();
+  });
+});
+
+// Email input — send on Enter
+document.getElementById('email-inp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendOtp();
+});
+
+// ── Init — check session on load ──────────────────────────────────────────────
+// Supabase restores session from localStorage automatically
+// We wait for it then decide which page to show
+_supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    updateUserDisplay(session.user.email);
+    localStorage.setItem('voixa_user_email', session.user.email);
+  }
+});
+
+// Check on page load
+(async () => {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (session && session.user) {
+    updateUserDisplay(session.user.email);
+    localStorage.setItem('voixa_user_email', session.user.email);
+    showPage('welcome');
+  } else {
+    showPage('otp');
+  }
+})();
+</script>
+</body>
+</html>

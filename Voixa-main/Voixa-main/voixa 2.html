@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swar - Indian Languages Speech to Text</title>
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons for elegant UI icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="ph ph-wave-sawtooth"></i>
+                <h1>Swar</h1>
+            </div>
+            <p class="subtitle">Indic Speech-to-Text & Translation</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Language Controls -->
+            <section class="controls-card glass-panel">
+                <div class="control-group">
+                    <label for="source-lang">Spoken Language</label>
+                    <div class="select-wrapper">
+                        <i class="ph ph-microphone"></i>
+                        <select id="source-lang">
+                            <option value="hi-IN">Hindi (हिन्दी)</option>
+                            <option value="ta-IN">Tamil (தமிழ்)</option>
+                            <option value="te-IN">Telugu (తెలుగు)</option>
+                            <option value="ml-IN">Malayalam (മലയാളം)</option>
+                            <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                            <option value="bn-IN">Bengali (বাংলা)</option>
+                            <option value="mr-IN">Marathi (मराठी)</option>
+                            <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                            <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="swap-icon-wrapper">
+                    <button id="swap-langs" class="icon-button" title="Swap Languages">
+                        <i class="ph ph-arrows-left-right"></i>
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <label for="target-lang">Translation Target</label>
+                    <div class="select-wrapper">
+                        <i class="ph ph-translate"></i>
+                        <select id="target-lang">
+                            <option value="ta-IN">Tamil (தமிழ்)</option>
+                            <option value="hi-IN">Hindi (हिन्दी)</option>
+                            <option value="te-IN">Telugu (తెలుగు)</option>
+                            <option value="ml-IN">Malayalam (മലയാളം)</option>
+                            <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                            <option value="bn-IN">Bengali (বাংলা)</option>
+                            <option value="mr-IN">Marathi (मराठी)</option>
+                            <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                            <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workspace -->
+            <section class="workspace">
+                <!-- Source Stream -->
+                <div class="editor-panel glass-panel">
+                    <div class="panel-header">
+                        <h2>Transcription</h2>
+                        <div class="actions">
+                            <button id="record-btn" class="primary-button">
+                                <i class="ph ph-microphone"></i>
+                                <span>Start Recording</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-area-container">
+                        <textarea id="source-text" placeholder="Your spoken text will appear here..."></textarea>
+                        <div class="status-indicator">
+                            <span class="pulse-dot" id="recording-indicator" style="display: none;"></span>
+                            <span id="recording-status">Ready to record</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Translation Target -->
+                <div class="editor-panel glass-panel">
+                    <div class="panel-header">
+                        <h2>Translation</h2>
+                        <div class="actions">
+                            <button id="play-btn" class="secondary-button" disabled>
+                                <i class="ph ph-play-circle"></i>
+                                <span>Listen</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-area-container">
+                        <textarea id="target-text" placeholder="Translation will appear here..." readonly></textarea>
+                        <div class="status-indicator">
+                            <span id="target-status">Awaiting translation</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WER Section -->
+            <section class="wer-card glass-panel">
+                <div class="wer-header">
+                    <h2>Word Error Rate (WER) Analysis</h2>
+                    <button id="toggle-wer" class="icon-button"><i class="ph ph-caret-down"></i></button>
+                </div>
+                <div id="wer-content" class="wer-content expanded">
+                    <p class="help-text">Enter the exact text you intend to speak below (Ground Truth). The system will compare it against the transcribed text above.</p>
+                    <textarea id="reference-text" placeholder="Enter ground truth reference text here..."></textarea>
+                    
+                    <div class="wer-stats">
+                        <div class="stat-box">
+                            <span class="stat-label">WER</span>
+                            <span class="stat-value highlight" id="wer-score">0.0%</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Substitutions</span>
+                            <span class="stat-value" id="wer-sub">0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Deletions</span>
+                            <span class="stat-value" id="wer-del">0</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Insertions</span>
+                            <span class="stat-value" id="wer-ins">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Toast Notification Area -->
+        <div id="toast-container"></div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

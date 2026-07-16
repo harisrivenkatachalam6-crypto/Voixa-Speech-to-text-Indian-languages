@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voixa — Indian Language Speech to Text</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Unsupported browser banner (hidden by default, shown via JS) -->
+  <div id="unsupported-banner" class="unsupported-banner" style="display:none;">
+    <i class="ph ph-warning-circle"></i>
+    <span>Speech Recognition is not supported in this browser. Please use <strong>Chrome</strong> or <strong>Edge</strong>.</span>
+  </div>
+
+  <div class="app-container">
+
+    <header class="app-header">
+      <div class="logo">
+        <i class="ph ph-wave-sawtooth"></i>
+        <h1>Voixa</h1>
+      </div>
+      <p class="subtitle">Indic Speech-to-Text &amp; Translation</p>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Language selectors -->
+      <section class="controls-card glass-panel">
+        <div class="control-group">
+          <label for="source-lang">Spoken Language</label>
+          <div class="select-wrapper">
+            <i class="ph ph-microphone"></i>
+            <select id="source-lang" aria-label="Select spoken language"></select>
+          </div>
+        </div>
+
+        <div class="swap-icon-wrapper">
+          <button id="swap-langs" class="icon-button" title="Swap Languages" aria-label="Swap languages">
+            <i class="ph ph-arrows-left-right"></i>
+          </button>
+        </div>
+
+        <div class="control-group">
+          <label for="target-lang">Translation Target</label>
+          <div class="select-wrapper">
+            <i class="ph ph-translate"></i>
+            <select id="target-lang" aria-label="Select target language"></select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Transcription + Translation panels -->
+      <section class="workspace">
+
+        <div class="editor-panel glass-panel">
+          <div class="panel-header">
+            <h2>Transcription</h2>
+            <div class="actions">
+              <button id="record-btn" class="primary-button" aria-label="Start recording">
+                <i class="ph ph-microphone"></i>
+                <span>Start Recording</span>
+              </button>
+            </div>
+          </div>
+          <div class="text-area-container">
+            <textarea id="source-text" placeholder="Your spoken text will appear here…" aria-label="Transcription output"></textarea>
+            <div class="status-indicator">
+              <span class="pulse-dot" id="recording-indicator" style="display:none;" aria-hidden="true"></span>
+              <span id="recording-status">Ready to record</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-panel glass-panel">
+          <div class="panel-header">
+            <h2>Translation</h2>
+            <div class="actions">
+              <button id="play-btn" class="secondary-button" disabled aria-label="Listen to translation">
+                <i class="ph ph-play-circle"></i>
+                <span>Listen</span>
+              </button>
+            </div>
+          </div>
+          <div class="text-area-container">
+            <textarea id="target-text" placeholder="Translation will appear here…" readonly aria-label="Translation output"></textarea>
+            <div class="status-indicator">
+              <span id="target-status">Awaiting translation</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- WER shortcut -->
+      <section class="wer-shortcut glass-panel">
+        <div class="wer-shortcut-inner">
+          <div class="wer-shortcut-info">
+            <i class="ph ph-chart-bar"></i>
+            <div>
+              <p class="wer-shortcut-title">Word Error Rate Analysis</p>
+              <p class="wer-shortcut-sub">View detailed transcription accuracy metrics</p>
+            </div>
+          </div>
+          <a href="wer.html" class="wer-shortcut-btn">
+            View WER <i class="ph ph-arrow-right"></i>
+          </a>
+        </div>
+      </section>
+
+    </main>
+
+    <div id="toast-container" aria-live="polite"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
